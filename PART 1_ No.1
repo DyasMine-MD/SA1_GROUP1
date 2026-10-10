@@ -1,0 +1,48 @@
+def get_inputs():
+    print("=== Factory Production & Defective Rate Calculator ===")
+    
+    # Get production proportions (x)
+    while True:
+        try:
+            print("\nEnter production proportions for the 3 factories (0.10 <= x_i <= 0.40, sum = 1.0):")
+            x1 = float(input("x1: "))
+            x2 = float(input("x2: "))
+            x3 = float(input("x3: "))
+            
+            x = [x1, x2, x3]
+            if all(0.10 <= val <= 0.40 for val in x) and abs(sum(x) - 1.0) < 1e-6:
+                break
+            else:
+                print("Invalid input. Each x_i must be between 0.10 and 0.40, and their sum must equal 1.0. Try again.")
+        except ValueError:
+            print("Invalid input. Please enter valid numeric values.")
+
+    # Get defective rates (y)
+    while True:
+        try:
+            print("\nEnter defective rates for the 3 factories (0.01 <= y_i <= 0.05, sum = 0.12):")
+            y1 = float(input("y1: "))
+            y2 = float(input("y2: "))
+            y3 = float(input("y3: "))
+            
+            y = [y1, y2, y3]
+            if all(0.01 <= val <= 0.05 for val in y) and abs(sum(y) - 0.12) < 1e-6:
+                break
+            else:
+                print("Invalid input. Each y_i must be between 0.01 and 0.05, and their sum must equal 0.12. Try again.")
+        except ValueError:
+            print("Invalid input. Please enter valid numeric values.")
+            
+    return x, y
+
+# Run input collection
+x, y = get_inputs()
+
+# Calculate total probability using the Law of Total Probability: P(Defective) = sum(xi * yi)
+prob_defective = sum(xi * yi for xi, yi in zip(x, y))
+
+# Display Results
+print("\n--- Results Summary ---")
+print(f"Production Proportions (x): {x[0]:.2f}, {x[1]:.2f}, {x[2]:.2f}")
+print(f"Defective Rates (y): {y[0]:.4f}, {y[1]:.4f}, {y[2]:.4f}")
+print(f"Probability that a randomly selected product is defective: {prob_defective:.6f} ({prob_defective
