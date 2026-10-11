@@ -1,0 +1,111 @@
+# =====================================================================
+# Interactive Front-End for Discrete Random Variables in R
+# =====================================================================
+
+validate_probs <- function(p) {
+  if (any(is.na(p))) stop("Error: Non-numeric value detected.")
+  if (any(p < 0.0 | p > 1.0)) stop("Validation Error: Probabilities must be within [0, 1].")
+  if (abs(sum(p) - 1.0) > 1e-5) stop(sprintf("Validation Error: Probabilities must sum to 1.0 (Sum: %.4f)", sum(p)))
+}
+
+univariate_calculator <- function() {
+  cat("\n=== Univariate Analysis ===\n")
+  x <- as.numeric(unlist(strsplit(readline("Enter X values (comma-separated): "), ",")))
+  p <- as.numeric(unlist(strsplit(readline("Enter P(X) values (comma-separated): "), ",")))
+  
+  if (length(x) != length(p)) {
+    cat("Error: Number of X values must match number of probabilities.\n")
+    return()
+  }
+  
+  valid <- tryCatch({ validate_probs(p); TRUE }, error = function(e) { cat(e$message, "\n"); FALSE })
+  if (!valid) return()
+  
+  mean_val <- sum(x * p)
+  var_val <- sum((x - mean_val)^2 * p)
+  cdf_val <- cumsum(p)
+  
+  cat("\n--- Results ---\n")
+  cat(sprintf("Mean (E[X]): %.4f\n", mean_val))
+  cat(sprintf("Variance (Var(X)): %.4f\n", var_val))
+  cat(sprintf("Standard Deviation: %.4f\n", sqrt(var_val)))
+  cat("CDF:", paste(round(cdf_val, 4), collapse = ", "), "\n")
+  
+  dev.new()
+  par(mfrow = c(1, 2))
+  barplot(p, names.arg = x, main = "PDF", xlab = "X", ylab = "P(X)", col = "skyblue", border = "black")
+  plot(x, cdf_val, type = "s", main = "CDF", xlab = "X", ylab = "F(X)", lwd = 2, col = "darkorange", ylim = c(0, 1.05))
+  points(x, cdf_val, pch = 16, col = "darkorange")
+  grid()
+  par(mfrow = c(1, 1))
+}
+
+bivariate_calculator <- function() {
+  cat("\n=== Bivariate Analysis ===\n")
+  x <- as.numeric(unlist(strsplit(readline("Enter X values (comma-separated): "), ",")))
+  y <- as.numeric(unlist(strsplit(readline("Enter Y values (comma-separated): "), ",")))
+  
+  mat_data <- matrix(0, nrow = length(x), ncol = length(y))
+  for (i in seq_along(x)) {
+    row_str <- readline(sprintf("Enter %d joint probabilities for X = %s (comma-separated): ", length(y), x[i]))
+    mat_data[i, ] <- as.numeric(unlist(strsplit(row_str, ",")))
+  }
+  rownames(mat_data) <- x
+  colnames(mat_data) <- y
+  
+  valid <- tryCatch({ validate_probs(as.vector(mat_data)); TRUE }, error = function(e) { cat(e$message, "\n"); FALSE })
+  if (!valid) return()
+  
+  marg_x <- rowSums(mat_data)
+  marg_y <- colSums(mat_data)
+  mean_x <- sum(x * marg_x); var_x <- sum((x - mean_x)^2 * marg_x)
+  mean_y <- sum(y * marg_y); var_y <- sum((y - mean_y)^2 * marg_y)
+  
+  cat("\n--- Results ---\n")
+  cat("Joint Probability Matrix P(X, Y):\n"); print(mat_data)
+  cat(sprintf("\nMarginal X -> Mean: %.4f | Var: %.4f\n", mean_x, var_x))
+  cat(sprintf("Marginal Y -> Mean: %.4f | Var: %.4f\n", mean_y, var_y))
+  cat("\nConditional P(Y | X):\n"); print(sweep(mat_data, 1, marg_x, "/"))
+  cat("\nConditional P(X | Y):\n"); print(sweep(mat_data, 2, marg_y, "/"))
+  
+  dev.new()
+  par(mfrow = c(1, 2))
+  barplot(marg_x, main = "Marginal PDF of X", xlab = "X", ylab = "P(X)", col = "lightblue", border = "black")
+  barplot(marg_y, main = "Marginal PDF of Y", xlab = "Y", ylab = "P(Y)", col = "lightgreen", border = "black")
+  par(mfrow = c(1, 1))
+}
+
+run_frontend <- function() {
+  cat("\n=====================================================\n")
+  cat("       R DISCRETE PROBABILITY FRONT-END PROGRAM      \n")
+  cat("=====================================================\n")
+  cat("RULES & INSTRUCTIONS:\n")
+  cat("1. Must run in an interactive R console session.\n")
+  cat("2. All probabilities must be within the interval [0, 1].\n")
+  cat("3. Probabilities must sum exactly to 1.0 (tolerance 1e-5).\n")
+  cat("=====================================================\n")
+  cat(">>> Program Loaded Successfully!\n")
+  cat(">>> Run command in console: run_frontend()\n")
+  cat("=====================================================\n\n")
+  
+  repeat {
+    cat("\n--- MAIN MENU ---\n")
+    cat("1. Univariate Analysis\n")
+    cat("2. Bivariate Analysis\n")
+    cat("3. Exit\n")
+    choice <- readline("Select option (1-3): ")
+    if (choice == "1") {
+      univariate_calculator()
+    } else if (choice == "2") {
+      bivariate_calculator()
+    } else if (choice == "3") {
+      cat("Goodbye!\n")
+      break
+    } else {
+      cat("Invalid choice. Please enter 1, 2, or 3.\n")
+    }
+  }
+}
+
+# Automatically display usage notice upon sourcing/running the file
+run_frontend()
